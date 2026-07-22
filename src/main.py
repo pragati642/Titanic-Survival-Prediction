@@ -170,23 +170,51 @@ loaded_model = joblib.load(
 )
 
 # ===========================
-# New Passenger
+# Take User Input
 # ===========================
+
+print("\nEnter Passenger Details\n")
+
+pclass = int(input("Passenger Class (1/2/3): "))
+sex = int(input("Gender (0 = Female, 1 = Male): "))
+age = float(input("Age: "))
+sibsp = int(input("Number of Siblings/Spouses: "))
+parch = int(input("Number of Parents/Children: "))
+fare = float(input("Fare: "))
+title = int(input("Title (0=Master, 1=Miss, 2=Mr, 3=Mrs, 4=Rare): "))
+
+embarked = input("Embarked (C/Q/S): ").upper()
+
+family_size = sibsp + parch + 1
+
+is_alone = 1 if family_size == 1 else 0
+
+embarked_c = 0
+embarked_q = 0
+embarked_s = 0
+
+if embarked == "C":
+    embarked_c = 1
+elif embarked == "Q":
+    embarked_q = 1
+else:
+    embarked_s = 1
 
 new_passenger = pd.DataFrame({
 
-    "Pclass": [3],
-    "Sex": [1],
-    "Age": [45],
-    "SibSp": [1],
-    "Parch": [0],
-    "Fare": [7],
-    "FamilySize": [2],
-    "IsAlone": [1],
-    "Title": [2],
-    "Embarked_C": [1],
-    "Embarked_Q": [0],
-    "Embarked_S": [0]
+    "Pclass": [pclass],
+    "Sex": [sex],
+    "Age": [age],
+    "SibSp": [sibsp],
+    "Parch": [parch],
+    "Fare": [fare],
+    "FamilySize": [family_size],
+    "IsAlone": [is_alone],
+    "Title": [title],
+    "Embarked_C": [embarked_c],
+    "Embarked_Q": [embarked_q],
+    "Embarked_S": [embarked_s]
+
 })
 
 prediction = loaded_model.predict(new_passenger)
