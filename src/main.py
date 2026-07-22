@@ -1,16 +1,18 @@
+import os
+
 import pandas as pd
+import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 
 from sklearn.ensemble import RandomForestClassifier
-
 from sklearn.preprocessing import LabelEncoder
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
-from sklearn.model_selection import GridSearchCV
 
 # ===========================
 # Load Dataset
@@ -23,7 +25,6 @@ df = pd.read_csv("data/Titanic-Dataset.csv")
 # ===========================
 
 df["Age"] = df["Age"].fillna(df["Age"].median())
-
 df["Embarked"] = df["Embarked"].fillna(df["Embarked"].mode()[0])
 
 # ===========================
@@ -36,14 +37,17 @@ df["FamilySize"] = df["SibSp"] + df["Parch"] + 1
 # Is Alone
 df["IsAlone"] = (df["FamilySize"] == 1).astype(int)
 
-# Title
-df["Title"] = df["Name"].str.extract(" ([A-Za-z]+)", expand=False)
+# Extract Title
+df["Title"] = df["Name"].str.extract(r" ([A-Za-z]+)\.", expand=False)
 
+# Replace Rare Titles
 df["Title"] = df["Title"].replace(
-    ['Lady', 'Countess', 'Capt', 'Col',
-     'Don', 'Dr', 'Major', 'Rev',
-     'Sir', 'Jonkheer', 'Dona'],
-    'Rare'
+    [
+        "Lady", "Countess", "Capt", "Col",
+        "Don", "Dr", "Major", "Rev",
+        "Sir", "Jonkheer", "Dona"
+    ],
+    "Rare"
 )
 
 df["Title"] = df["Title"].replace("Mlle", "Miss")
@@ -57,7 +61,6 @@ df["Title"] = df["Title"].replace("Mme", "Mrs")
 encoder = LabelEncoder()
 
 df["Sex"] = encoder.fit_transform(df["Sex"])
-
 df["Title"] = encoder.fit_transform(df["Title"])
 
 # ===========================
@@ -87,7 +90,6 @@ df = df.drop(
 # ===========================
 
 X = df.drop("Survived", axis=1)
-
 y = df["Survived"]
 
 # ===========================
@@ -100,6 +102,11 @@ X_train, X_test, y_train, y_test = train_test_split(
     test_size=0.2,
     random_state=42
 )
+
+# ===========================
+# Parameter Grid
+# ===========================
+
 param_grid = {
     "n_estimators": [50, 100, 200],
     "max_depth": [3, 5, 10],
@@ -107,15 +114,8 @@ param_grid = {
 }
 
 # ===========================
-# Random Forest Model
+# Grid Search
 # ===========================
-
-model = RandomForestClassifier(
-    n_estimators=100,
-    random_state=42,
-    max_depth=5,
-    min_samples_split=10
-)
 
 grid_search = GridSearchCV(
     estimator=RandomForestClassifier(random_state=42),
@@ -126,16 +126,56 @@ grid_search = GridSearchCV(
 )
 
 # ===========================
-# Train Model
+# Train Grid Search
 # ===========================
 
-model.fit(X_train, y_train)
 grid_search.fit(X_train, y_train)
+
+# ===========================
+# Best Model
+# ===========================
+
+best_model = grid_search.best_estimator_
+
+# ===========================
+# Save Model
+# ===========================
+
+os.makedirs("model", exist_ok=True)
+
+# Create folder if it doesn't exist
+os.makedirs("model", exist_ok=True)
+
+# Save model
+joblib.dump(
+    best_model,
+    "model/random_forest_model.pkl"
+)
+
+print("Model Saved Successfully!")
+
+joblib.dump(
+    best_model,
+    "model/random_forest_model.pkl"
+)
+
+print("Model Saved Successfully!")
+
+# ===========================
+# Load Saved Model
+# ===========================
+
+loaded_model = joblib.load(
+    "model/random_forest_model.pkl"
+)
+
+print("Model Loaded Successfully!")
+
 # ===========================
 # Prediction
 # ===========================
 
-y_pred = model.predict(X_test)
+y_pred = loaded_model.predict(X_test)
 
 # ===========================
 # Accuracy
@@ -143,14 +183,13 @@ y_pred = model.predict(X_test)
 
 accuracy = accuracy_score(y_test, y_pred)
 
-print("Accuracy:", accuracy)
+print("\nAccuracy:", accuracy)
 
 # ===========================
 # Confusion Matrix
 # ===========================
 
 print("\nConfusion Matrix:")
-
 print(confusion_matrix(y_test, y_pred))
 
 # ===========================
@@ -158,15 +197,14 @@ print(confusion_matrix(y_test, y_pred))
 # ===========================
 
 print("\nClassification Report:")
-
 print(classification_report(y_test, y_pred))
 
 # ===========================
-# Cross Validation (NEW)
+# Cross Validation
 # ===========================
 
 scores = cross_val_score(
-    model,
+    best_model,
     X,
     y,
     cv=5
@@ -179,10 +217,13 @@ print("==============================")
 print(scores)
 
 print("\nAverage Cross Validation Accuracy:")
-
 print(scores.mean())
 
-print("Best Parameters:")
+# ===========================
+# Grid Search Results
+# ===========================
+
+print("\nBest Parameters:")
 print(grid_search.best_params_)
 
 print("\nBest Cross Validation Accuracy:")
