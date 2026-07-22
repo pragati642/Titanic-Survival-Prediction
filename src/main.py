@@ -10,6 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
+from sklearn.model_selection import GridSearchCV
 
 # ===========================
 # Load Dataset
@@ -99,6 +100,11 @@ X_train, X_test, y_train, y_test = train_test_split(
     test_size=0.2,
     random_state=42
 )
+param_grid = {
+    "n_estimators": [50, 100, 200],
+    "max_depth": [3, 5, 10],
+    "min_samples_split": [2, 5, 10]
+}
 
 # ===========================
 # Random Forest Model
@@ -111,12 +117,20 @@ model = RandomForestClassifier(
     min_samples_split=10
 )
 
+grid_search = GridSearchCV(
+    estimator=RandomForestClassifier(random_state=42),
+    param_grid=param_grid,
+    cv=5,
+    scoring="accuracy",
+    n_jobs=-1
+)
+
 # ===========================
 # Train Model
 # ===========================
 
 model.fit(X_train, y_train)
-
+grid_search.fit(X_train, y_train)
 # ===========================
 # Prediction
 # ===========================
@@ -167,3 +181,9 @@ print(scores)
 print("\nAverage Cross Validation Accuracy:")
 
 print(scores.mean())
+
+print("Best Parameters:")
+print(grid_search.best_params_)
+
+print("\nBest Cross Validation Accuracy:")
+print(grid_search.best_score_)
