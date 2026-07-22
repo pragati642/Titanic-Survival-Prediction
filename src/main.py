@@ -1,147 +1,169 @@
-# ==========================================
-# Titanic Survival Prediction - Lesson 17
-# ==========================================
-
-# Import Libraries
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+
+from sklearn.ensemble import RandomForestClassifier
+
 from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
+
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
-from sklearn.ensemble import RandomForestClassifier
 
-# ==========================================
+# ===========================
 # Load Dataset
-# ==========================================
+# ===========================
 
 df = pd.read_csv("data/Titanic-Dataset.csv")
 
-# ==========================================
+# ===========================
 # Handle Missing Values
-# ==========================================
+# ===========================
 
-# Fill missing Age values with mean
-df["Age"] = df["Age"].fillna(df["Age"].mean())
+df["Age"] = df["Age"].fillna(df["Age"].median())
 
-# Fill missing Embarked values with mode
 df["Embarked"] = df["Embarked"].fillna(df["Embarked"].mode()[0])
 
-# ==========================================
+# ===========================
+# Feature Engineering
+# ===========================
+
+# Family Size
+df["FamilySize"] = df["SibSp"] + df["Parch"] + 1
+
+# Is Alone
+df["IsAlone"] = (df["FamilySize"] == 1).astype(int)
+
+# Title
+df["Title"] = df["Name"].str.extract(" ([A-Za-z]+)", expand=False)
+
+df["Title"] = df["Title"].replace(
+    ['Lady', 'Countess', 'Capt', 'Col',
+     'Don', 'Dr', 'Major', 'Rev',
+     'Sir', 'Jonkheer', 'Dona'],
+    'Rare'
+)
+
+df["Title"] = df["Title"].replace("Mlle", "Miss")
+df["Title"] = df["Title"].replace("Ms", "Miss")
+df["Title"] = df["Title"].replace("Mme", "Mrs")
+
+# ===========================
 # Label Encoding
-# ==========================================
+# ===========================
 
 encoder = LabelEncoder()
 
-# Encode Sex column
 df["Sex"] = encoder.fit_transform(df["Sex"])
 
-# ==========================================
-# Feature Engineering
-# ==========================================
-
-# Create FamilySize
-df["FamilySize"] = df["SibSp"] + df["Parch"] + 1
-
-# Create IsAlone
-df["IsAlone"] = (df["FamilySize"] == 1).astype(int)
-
-# Extract Title from Name
-df["Title"] = df["Name"].str.extract(" ([A-Za-z]+).", expand=False)
-
-# Encode Title
 df["Title"] = encoder.fit_transform(df["Title"])
 
-# ==========================================
-# One-Hot Encoding
-# ==========================================
+# ===========================
+# One Hot Encoding
+# ===========================
 
 embarked = pd.get_dummies(df["Embarked"], prefix="Embarked")
 
-# Add new columns to dataframe
 df = pd.concat([df, embarked], axis=1)
 
-# ==========================================
-# Features (Input)
-# ==========================================
+# ===========================
+# Drop Unnecessary Columns
+# ===========================
 
-X = df[
-    [
-        "Pclass",
-        "Age",
-        "Fare",
-        "Sex",
-        "FamilySize",
-        "IsAlone",
-        "Title",
-        "Embarked_C",
-        "Embarked_Q",
-        "Embarked_S",
+df = df.drop(
+    columns=[
+        "PassengerId",
+        "Name",
+        "Ticket",
+        "Cabin",
+        "Embarked"
     ]
-]
+)
 
-# ==========================================
-# Target (Output)
-# ==========================================
+# ===========================
+# Features and Target
+# ===========================
+
+X = df.drop("Survived", axis=1)
 
 y = df["Survived"]
 
-# ==========================================
-# Split Dataset
-# ==========================================
+# ===========================
+# Train Test Split
+# ===========================
 
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
     test_size=0.2,
-    random_state=42,
-)
-
-# ==========================================
-# Feature Scaling
-# ==========================================
-
-# scaler = StandardScaler()
-
-# X_train = scaler.fit_transform(X_train)
-
-# X_test = scaler.transform(X_test)
-
-# ==========================================
-# Create Model
-# ==========================================
-
-model = RandomForestClassifier(
-    n_estimators=100,
     random_state=42
 )
 
-# ==========================================
+# ===========================
+# Random Forest Model
+# ===========================
+
+model = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42,
+    max_depth=5,
+    min_samples_split=10
+)
+
+# ===========================
 # Train Model
-# ==========================================
+# ===========================
 
 model.fit(X_train, y_train)
 
-# ==========================================
-# Make Predictions
-# ==========================================
+# ===========================
+# Prediction
+# ===========================
 
-predictions = model.predict(X_test)
+y_pred = model.predict(X_test)
 
-# ==========================================
-# Evaluate Model
-# ==========================================
+# ===========================
+# Accuracy
+# ===========================
 
-accuracy = accuracy_score(y_test, predictions)
+accuracy = accuracy_score(y_test, y_pred)
 
 print("Accuracy:", accuracy)
 
+# ===========================
+# Confusion Matrix
+# ===========================
+
 print("\nConfusion Matrix:")
-print(confusion_matrix(y_test, predictions))
+
+print(confusion_matrix(y_test, y_pred))
+
+# ===========================
+# Classification Report
+# ===========================
 
 print("\nClassification Report:")
-print(classification_report(y_test, predictions))
+
+print(classification_report(y_test, y_pred))
+
+# ===========================
+# Cross Validation (NEW)
+# ===========================
+
+scores = cross_val_score(
+    model,
+    X,
+    y,
+    cv=5
+)
+
+print("\n==============================")
+print("Cross Validation Scores")
+print("==============================")
+
+print(scores)
+
+print("\nAverage Cross Validation Accuracy:")
+
+print(scores.mean())
