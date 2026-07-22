@@ -176,12 +176,36 @@ loaded_model = joblib.load(
 print("\nEnter Passenger Details\n")
 
 pclass = int(input("Passenger Class (1/2/3): "))
-sex = int(input("Gender (0 = Female, 1 = Male): "))
+gender = input("Gender (Male/Female): ").strip().lower()
+
+if gender == "male":
+    sex = 1
+elif gender == "female":
+    sex = 0
+else:
+    print("Invalid Gender!")
+    exit()
 age = float(input("Age: "))
 sibsp = int(input("Number of Siblings/Spouses: "))
 parch = int(input("Number of Parents/Children: "))
 fare = float(input("Fare: "))
-title = int(input("Title (0=Master, 1=Miss, 2=Mr, 3=Mrs, 4=Rare): "))
+title_name = input(
+    "Title (Mr/Mrs/Miss/Master/Rare): "
+).strip().lower()
+
+title_map = {
+    "master": 0,
+    "miss": 1,
+    "mr": 2,
+    "mrs": 3,
+    "rare": 4
+}
+
+if title_name in title_map:
+    title = title_map[title_name]
+else:
+    print("Invalid Title!")
+    exit()
 
 embarked = input("Embarked (C/Q/S): ").upper()
 
