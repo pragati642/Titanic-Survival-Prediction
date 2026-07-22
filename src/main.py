@@ -169,6 +169,28 @@ loaded_model = joblib.load(
     "model/random_forest_model.pkl"
 )
 
+# ===========================
+# New Passenger
+# ===========================
+
+new_passenger = pd.DataFrame({
+
+    "Pclass": [3],
+    "Sex": [1],
+    "Age": [45],
+    "SibSp": [1],
+    "Parch": [0],
+    "Fare": [7],
+    "FamilySize": [2],
+    "IsAlone": [1],
+    "Title": [2],
+    "Embarked_C": [1],
+    "Embarked_Q": [0],
+    "Embarked_S": [0]
+})
+
+prediction = loaded_model.predict(new_passenger)
+
 print("Model Loaded Successfully!")
 
 # ===========================
@@ -228,3 +250,13 @@ print(grid_search.best_params_)
 
 print("\nBest Cross Validation Accuracy:")
 print(grid_search.best_score_)
+
+X = df.drop("Survived", axis=1)
+print(X.columns)
+
+print("\nPrediction:")
+
+if prediction[0] == 1:
+    print(" Passenger Survived")
+else:
+    print(" Passenger Did Not Survive")
