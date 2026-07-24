@@ -175,23 +175,33 @@ loaded_model = joblib.load(
 
 print("\nEnter Passenger Details\n")
 
-pclass = int(input("Passenger Class (1/2/3): "))
-gender = input("Gender (Male/Female): ").strip().lower()
+while True:
 
-if gender == "male":
-    sex = 1
-elif gender == "female":
-    sex = 0
-else:
-    print("Invalid Gender!")
-    exit()
+    pclass = int(input("Passenger Class (1/2/3): "))
+
+    if pclass in [1, 2, 3]:
+        break
+
+    print("❌ Please enter only 1, 2 or 3.")
+
+while True:
+    gender = input("Gender (Male/Female): ").strip().lower()
+
+    if gender == "male":
+        sex = 1
+        break
+
+    elif gender == "female":
+        sex = 0
+        break
+
+    else:
+        print("❌ Invalid Gender! Please enter Male or Female.")
+
 age = float(input("Age: "))
 sibsp = int(input("Number of Siblings/Spouses: "))
 parch = int(input("Number of Parents/Children: "))
 fare = float(input("Fare: "))
-title_name = input(
-    "Title (Mr/Mrs/Miss/Master/Rare): "
-).strip().lower()
 
 title_map = {
     "master": 0,
@@ -201,13 +211,26 @@ title_map = {
     "rare": 4
 }
 
-if title_name in title_map:
-    title = title_map[title_name]
-else:
-    print("Invalid Title!")
-    exit()
+while True:
 
-embarked = input("Embarked (C/Q/S): ").upper()
+    title_name = input(
+        "Title (Mr/Mrs/Miss/Master/Rare): "
+    ).strip().lower()
+
+    if title_name in title_map:
+        title = title_map[title_name]
+        break
+
+    print("❌ Invalid Title!")
+
+while True:
+
+    embarked = input("Embarked (C/Q/S): ").strip().upper()
+
+    if embarked in ["C", "Q", "S"]:
+        break
+
+    print("❌ Please enter C, Q or S.")
 
 family_size = sibsp + parch + 1
 
