@@ -14,6 +14,100 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 
+
+def get_passenger_details():
+    print("\nEnter Passenger Details\n")
+
+    while True:
+
+        pclass = int(input("Passenger Class (1/2/3): "))
+
+        if pclass in [1, 2, 3]:
+            break
+
+        print("❌ Please enter only 1, 2 or 3.")
+
+    while True:
+        gender = input("Gender (Male/Female): ").strip().lower()
+
+        if gender == "male":
+            sex = 1
+            break
+
+        elif gender == "female":
+            sex = 0
+            break
+
+        else:
+            print(" Invalid Gender! Please enter Male or Female.")
+
+    age = float(input("Age: "))
+    sibsp = int(input("Number of Siblings/Spouses: "))
+    parch = int(input("Number of Parents/Children: "))
+    fare = float(input("Fare: "))
+
+    title_map = {
+        "master": 0,
+        "miss": 1,
+        "mr": 2,
+        "mrs": 3,
+        "rare": 4
+    }
+
+    while True:
+
+        title_name = input("Title (Mr/Mrs/Miss/Master/Rare): ").strip().lower()
+
+        if title_name in title_map:
+            title = title_map[title_name]
+            break
+
+        print("Invalid Title!")
+
+    while True:
+
+        embarked = input("Embarked (C/Q/S): ").strip().upper()
+
+        if embarked in ["C", "Q", "S"]:
+            break
+
+        print("Please enter C, Q or S.")
+
+    family_size = sibsp + parch + 1
+
+    is_alone = 1 if family_size == 1 else 0
+
+    embarked_c = 0
+    embarked_q = 0
+    embarked_s = 0
+
+    if embarked == "C":
+        embarked_c = 1
+    elif embarked == "Q":
+        embarked_q = 1
+    else:
+        embarked_s = 1
+
+    new_passenger = pd.DataFrame({
+
+        "Pclass": [pclass],
+        "Sex": [sex],
+        "Age": [age],
+        "SibSp": [sibsp],
+        "Parch": [parch],
+        "Fare": [fare],
+        "FamilySize": [family_size],
+        "IsAlone": [is_alone],
+        "Title": [title],
+        "Embarked_C": [embarked_c],
+        "Embarked_Q": [embarked_q],
+        "Embarked_S": [embarked_s]
+
+    })
+
+    return new_passenger
+
+
 # ===========================
 # Load Dataset
 # ===========================
@@ -141,7 +235,7 @@ best_model = grid_search.best_estimator_
 # Save Model
 # ===========================
 
-os.makedirs("model", exist_ok=True)
+
 
 # Create folder if it doesn't exist
 os.makedirs("model", exist_ok=True)
@@ -154,119 +248,33 @@ joblib.dump(
 
 print("Model Saved Successfully!")
 
-joblib.dump(
-    best_model,
-    "model/random_forest_model.pkl"
-)
-
-print("Model Saved Successfully!")
 
 # ===========================
 # Load Saved Model
 # ===========================
 
-loaded_model = joblib.load(
-    "model/random_forest_model.pkl"
-)
+loaded_model = joblib.load("model/random_forest_model.pkl")
+
+print("Model Loaded Successfully!")
+
+new_passenger = get_passenger_details()
+
+prediction = loaded_model.predict(new_passenger)
+print("\nPrediction:")
+
+if prediction[0] == 1:
+    print(" Passenger Survived")
+else:
+    print(" Passenger Did Not Survive")
+
+
+
 
 # ===========================
 # Take User Input
 # ===========================
 
-print("\nEnter Passenger Details\n")
 
-while True:
-
-    pclass = int(input("Passenger Class (1/2/3): "))
-
-    if pclass in [1, 2, 3]:
-        break
-
-    print("❌ Please enter only 1, 2 or 3.")
-
-while True:
-    gender = input("Gender (Male/Female): ").strip().lower()
-
-    if gender == "male":
-        sex = 1
-        break
-
-    elif gender == "female":
-        sex = 0
-        break
-
-    else:
-        print("❌ Invalid Gender! Please enter Male or Female.")
-
-age = float(input("Age: "))
-sibsp = int(input("Number of Siblings/Spouses: "))
-parch = int(input("Number of Parents/Children: "))
-fare = float(input("Fare: "))
-
-title_map = {
-    "master": 0,
-    "miss": 1,
-    "mr": 2,
-    "mrs": 3,
-    "rare": 4
-}
-
-while True:
-
-    title_name = input(
-        "Title (Mr/Mrs/Miss/Master/Rare): "
-    ).strip().lower()
-
-    if title_name in title_map:
-        title = title_map[title_name]
-        break
-
-    print("❌ Invalid Title!")
-
-while True:
-
-    embarked = input("Embarked (C/Q/S): ").strip().upper()
-
-    if embarked in ["C", "Q", "S"]:
-        break
-
-    print("❌ Please enter C, Q or S.")
-
-family_size = sibsp + parch + 1
-
-is_alone = 1 if family_size == 1 else 0
-
-embarked_c = 0
-embarked_q = 0
-embarked_s = 0
-
-if embarked == "C":
-    embarked_c = 1
-elif embarked == "Q":
-    embarked_q = 1
-else:
-    embarked_s = 1
-
-new_passenger = pd.DataFrame({
-
-    "Pclass": [pclass],
-    "Sex": [sex],
-    "Age": [age],
-    "SibSp": [sibsp],
-    "Parch": [parch],
-    "Fare": [fare],
-    "FamilySize": [family_size],
-    "IsAlone": [is_alone],
-    "Title": [title],
-    "Embarked_C": [embarked_c],
-    "Embarked_Q": [embarked_q],
-    "Embarked_S": [embarked_s]
-
-})
-
-prediction = loaded_model.predict(new_passenger)
-
-print("Model Loaded Successfully!")
 
 # ===========================
 # Prediction
@@ -327,11 +335,14 @@ print("\nBest Cross Validation Accuracy:")
 print(grid_search.best_score_)
 
 X = df.drop("Survived", axis=1)
-print(X.columns)
 
-print("\nPrediction:")
+print("\nFeatures Used:")
+print(X.columns.tolist())
 
-if prediction[0] == 1:
-    print(" Passenger Survived")
-else:
-    print(" Passenger Did Not Survive")
+print("\nProject Executed Successfully!")
+
+probability = loaded_model.predict_proba(new_passenger)
+
+print(f"Survival Probability: {probability[0][1] * 100:.2f}%")
+
+
